@@ -5,15 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ジェラートおじさん</title>
 
-<!-- ===== PWA / iOSホーム画面アイコン設定 ===== -->
+<!-- iOSホーム画面アイコン（おじさん）。manifest も serviceWorker も使わない最小構成 -->
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ジェラート">
-<meta name="theme-color" content="#EAE7FB">
 
 <style>
   html,body{margin:0;padding:0;min-height:100%;background:#EAE7FB;
@@ -23,7 +20,6 @@
   .icon{width:120px;height:120px;border-radius:26px;
     box-shadow:0 8px 24px rgba(90,70,50,.18);background:#fff;}
   .title{margin-top:18px;font-weight:700;font-size:18px;}
-  .sub{margin-top:6px;font-size:13px;color:#8A7C6B;text-align:center;line-height:1.7;}
   .btn{margin-top:24px;border:none;border-radius:16px;background:#E85D7A;color:#fff;
     font-weight:700;font-size:17px;font-family:inherit;padding:15px 40px;cursor:pointer;
     box-shadow:0 6px 16px rgba(232,93,122,.4);}
@@ -35,46 +31,31 @@
   <div class="wrap">
     <img class="icon" src="icons/apple-touch-icon.png" alt="ジェラートおじさん">
     <div class="title">ジェラートおじさん 🍦</div>
-    <div class="sub" id="sub">アプリを起動します…</div>
-
-    <!-- Safariで見ているときに表示するボタン -->
-    <button class="btn" id="openBtn" style="display:none;">アプリを開く 🍨</button>
-    <div class="hint" id="hint" style="display:none;">
-      このページを「ホーム画面に追加」すると、<br>おじさんアイコンで登録されます📲
-    </div>
+    <button class="btn" id="openBtn">アプリを開く 🍨</button>
+    <div class="hint">このページを「ホーム画面に追加」すると、<br>おじさんアイコンで登録されます📲</div>
   </div>
 
 <script>
-// ============================================================
-//  GASウェブアプリのURL（.../exec）
-// ============================================================
-var GAS_APP_URL = "https://script.google.com/a/macros/sincerita.jp/s/AKfycbw6DhUZFQcuxaO2ZXKbYLqHz-I3uKfX0p1Y2i4C9g6NMcb7r3PNaCQ1C8Ok3COC3nqX4Q/exec";
+  // GASウェブアプリのURL（.../exec）
+  var GAS_APP_URL = "https://script.google.com/a/macros/sincerita.jp/s/AKfycbw6DhUZFQcuxaO2ZXKbYLqHz-I3uKfX0p1Y2i4C9g6NMcb7r3PNaCQ1C8Ok3COC3nqX4Q/exec";
 
-// ホーム画面アイコンから起動した（＝スタンドアロン）かどうかを判定
-var isStandalone =
-  (window.navigator.standalone === true) ||
-  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-
-if (isStandalone) {
-  // ホーム画面アイコンから開いた → すぐにGASアプリへ移動（白画面にならない）
-  setTimeout(function(){ window.location.replace(GAS_APP_URL); }, 400);
-} else {
-  // Safariで普通に開いている → 「開く」ボタンと、ホーム画面追加の案内を表示
-  //  （この状態で「ホーム画面に追加」すると、このページ＝おじさんアイコンが登録される）
-  document.getElementById('sub').style.display = 'none';
-  document.getElementById('openBtn').style.display = 'inline-block';
-  document.getElementById('hint').style.display = 'block';
+  // ボタンでGASアプリへ移動
   document.getElementById('openBtn').addEventListener('click', function(){
     window.location.href = GAS_APP_URL;
   });
-}
 
-// サービスワーカー登録（任意）
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  });
-}
+  // ホーム画面アイコンから起動したときは自動で開く
+  var standalone = (window.navigator.standalone === true) ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (standalone) { window.location.href = GAS_APP_URL; }
+
+  // 念のため、過去に登録されたサービスワーカー／キャッシュを掃除（無ければ何もしない）
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); });
+  }
+  if (window.caches && caches.keys) {
+    caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); });
+  }
 </script>
 </body>
 </html>
