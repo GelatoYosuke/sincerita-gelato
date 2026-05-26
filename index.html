@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ジェラートおじさん</title>
 
-<!-- iOSホーム画面アイコン（おじさん）。manifestも読むが、SWは使わない -->
+<!-- ===== PWA / iOSホーム画面アイコン設定 ===== -->
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="manifest" href="manifest.json">
@@ -36,6 +36,8 @@
     <img class="icon" src="icons/apple-touch-icon.png" alt="ジェラートおじさん">
     <div class="title">ジェラートおじさん 🍦</div>
     <div class="sub" id="sub">アプリを起動します…</div>
+
+    <!-- Safariで見ているときに表示するボタン -->
     <button class="btn" id="openBtn" style="display:none;">アプリを開く 🍨</button>
     <div class="hint" id="hint" style="display:none;">
       このページを「ホーム画面に追加」すると、<br>おじさんアイコンで登録されます📲
@@ -43,19 +45,22 @@
   </div>
 
 <script>
-// GASウェブアプリのURL（.../exec）
+// ============================================================
+//  GASウェブアプリのURL（.../exec）
+// ============================================================
 var GAS_APP_URL = "https://script.google.com/a/macros/sincerita.jp/s/AKfycbw6DhUZFQcuxaO2ZXKbYLqHz-I3uKfX0p1Y2i4C9g6NMcb7r3PNaCQ1C8Ok3COC3nqX4Q/exec";
 
-// ホーム画面アイコンから起動した（スタンドアロン）かどうか
+// ホーム画面アイコンから起動した（＝スタンドアロン）かどうかを判定
 var isStandalone =
   (window.navigator.standalone === true) ||
   (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 
 if (isStandalone) {
-  // ホーム画面から開いた → すぐGASアプリへ移動
+  // ホーム画面アイコンから開いた → すぐにGASアプリへ移動（白画面にならない）
   setTimeout(function(){ window.location.replace(GAS_APP_URL); }, 400);
 } else {
-  // Safariで普通に開いている → ボタンと案内を表示
+  // Safariで普通に開いている → 「開く」ボタンと、ホーム画面追加の案内を表示
+  //  （この状態で「ホーム画面に追加」すると、このページ＝おじさんアイコンが登録される）
   document.getElementById('sub').style.display = 'none';
   document.getElementById('openBtn').style.display = 'inline-block';
   document.getElementById('hint').style.display = 'block';
@@ -64,16 +69,10 @@ if (isStandalone) {
   });
 }
 
-// 【重要】以前に登録されたサービスワーカーとキャッシュを掃除する
-// （これが残っていると古い壊れた表示が出続けるため）
+// サービスワーカー登録（任意）
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
-  });
-}
-if (window.caches && caches.keys) {
-  caches.keys().then(function(keys){
-    keys.forEach(function(k){ caches.delete(k); });
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
   });
 }
 </script>
