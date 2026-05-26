@@ -5,81 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ジェラートおじさん</title>
 
-<!-- ===== PWA / iOSホーム画面アイコン設定 ===== -->
-<!-- iOSホーム画面のアイコン（おじさん） -->
+<!-- iOSホーム画面アイコン（おじさん）。manifestも読むが、SWは使わない -->
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<!-- ブラウザのタブ用 -->
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<!-- PWAマニフェスト -->
 <link rel="manifest" href="manifest.json">
-
-<!-- iOSでホーム画面から全画面起動させる設定 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ジェラート">
-<meta name="theme-color" content="#FFF6EA">
+<meta name="theme-color" content="#EAE7FB">
 
 <style>
-  html,body{margin:0;padding:0;height:100%;background:#FFF6EA;overflow:hidden;}
-  /* GASアプリを表示する全画面iframe */
-  #appFrame{
-    position:fixed;inset:0;width:100%;height:100%;border:0;
-    /* iPhoneのノッチ/ホームバー領域を避ける */
-    padding-top:env(safe-area-inset-top);
-    padding-bottom:env(safe-area-inset-bottom);
-    box-sizing:border-box;background:#FFF6EA;
-  }
-  /* 読み込み中スプラッシュ（おじさん） */
-  #splash{
-    position:fixed;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;background:#EAE7FB;z-index:10;
-    transition:opacity .4s;font-family:sans-serif;color:#5A4632;
-  }
-  #splash img{width:120px;height:120px;border-radius:26px;
-    box-shadow:0 8px 24px rgba(90,70,50,.18);}
-  #splash p{margin-top:16px;font-weight:700;font-size:14px;}
-  #splash.hide{opacity:0;pointer-events:none;}
+  html,body{margin:0;padding:0;min-height:100%;background:#EAE7FB;
+    font-family:'Hiragino Kaku Gothic ProN',sans-serif;color:#5A4632;}
+  .wrap{min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
+  .icon{width:120px;height:120px;border-radius:26px;
+    box-shadow:0 8px 24px rgba(90,70,50,.18);background:#fff;}
+  .title{margin-top:18px;font-weight:700;font-size:18px;}
+  .sub{margin-top:6px;font-size:13px;color:#8A7C6B;text-align:center;line-height:1.7;}
+  .btn{margin-top:24px;border:none;border-radius:16px;background:#E85D7A;color:#fff;
+    font-weight:700;font-size:17px;font-family:inherit;padding:15px 40px;cursor:pointer;
+    box-shadow:0 6px 16px rgba(232,93,122,.4);}
+  .hint{margin-top:28px;font-size:12px;color:#A99;text-align:center;line-height:1.8;
+    background:rgba(255,255,255,.5);padding:12px 16px;border-radius:14px;max-width:300px;}
 </style>
 </head>
 <body>
-
-  <!-- 読み込み中の表示（iframeが表示され次第フェードアウト） -->
-  <div id="splash">
-    <img src="icons/apple-touch-icon.png" alt="ジェラートおじさん">
-    <p>ジェラートおじさん を起動中…🍦</p>
+  <div class="wrap">
+    <img class="icon" src="icons/apple-touch-icon.png" alt="ジェラートおじさん">
+    <div class="title">ジェラートおじさん 🍦</div>
+    <div class="sub" id="sub">アプリを起動します…</div>
+    <button class="btn" id="openBtn" style="display:none;">アプリを開く 🍨</button>
+    <div class="hint" id="hint" style="display:none;">
+      このページを「ホーム画面に追加」すると、<br>おじさんアイコンで登録されます📲
+    </div>
   </div>
 
-  <!-- GASウェブアプリを全画面で表示 -->
-  <iframe id="appFrame" title="ジェラートおじさん" allow="camera; geolocation"></iframe>
-
 <script>
-// ============================================================
-//  ▼▼▼ ここに、あなたのGASウェブアプリの「/exec」URLを貼り付けてください ▼▼▼
-//      （GASの「デプロイ」→「ウェブアプリ」のURL。.../exec で終わるもの）
-// ============================================================
-var GAS_APP_URL = "ここにGASウェブアプリのURL（.../exec）を貼り付け";
-// ============================================================
+// GASウェブアプリのURL（.../exec）
+var GAS_APP_URL = "https://script.google.com/a/macros/sincerita.jp/s/AKfycbw6DhUZFQcuxaO2ZXKbYLqHz-I3uKfX0p1Y2i4C9g6NMcb7r3PNaCQ1C8Ok3COC3nqX4Q/exec";
 
-// iframeにGASアプリを読み込む
-var frame = document.getElementById('appFrame');
-frame.src = GAS_APP_URL;
+// ホーム画面アイコンから起動した（スタンドアロン）かどうか
+var isStandalone =
+  (window.navigator.standalone === true) ||
+  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 
-// 読み込めたらスプラッシュを消す
-frame.addEventListener('load', function(){
-  document.getElementById('splash').classList.add('hide');
-});
-// 念のため、一定時間後にもスプラッシュを消す（保険）
-setTimeout(function(){
-  document.getElementById('splash').classList.add('hide');
-}, 4000);
+if (isStandalone) {
+  // ホーム画面から開いた → すぐGASアプリへ移動
+  setTimeout(function(){ window.location.replace(GAS_APP_URL); }, 400);
+} else {
+  // Safariで普通に開いている → ボタンと案内を表示
+  document.getElementById('sub').style.display = 'none';
+  document.getElementById('openBtn').style.display = 'inline-block';
+  document.getElementById('hint').style.display = 'block';
+  document.getElementById('openBtn').addEventListener('click', function(){
+    window.location.href = GAS_APP_URL;
+  });
+}
 
-// サービスワーカーを登録（PWAとして成立させる。iOSでは必須ではないが入れておくと安心）
+// 【重要】以前に登録されたサービスワーカーとキャッシュを掃除する
+// （これが残っていると古い壊れた表示が出続けるため）
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(e){
-      console.log('SW登録スキップ:', e);
-    });
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(r){ r.unregister(); });
+  });
+}
+if (window.caches && caches.keys) {
+  caches.keys().then(function(keys){
+    keys.forEach(function(k){ caches.delete(k); });
   });
 }
 </script>
