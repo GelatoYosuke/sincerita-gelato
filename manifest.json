@@ -1,0 +1,16 @@
+{
+  "name": "ジェラートおじさん",
+  "short_name": "ジェラート",
+  "description": "SINCERITA ジェラート食べ歩き記録アプリ",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EAE7FB",
+  "theme_color": "#FFF6EA",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

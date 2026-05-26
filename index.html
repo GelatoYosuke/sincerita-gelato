@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>ジェラートおじさん</title>
+
+<!-- ===== PWA / iOSホーム画面アイコン設定 ===== -->
+<!-- iOSホーム画面のアイコン（おじさん） -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<!-- ブラウザのタブ用 -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<!-- PWAマニフェスト -->
+<link rel="manifest" href="manifest.json">
+
+<!-- iOSでホーム画面から全画面起動させる設定 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ジェラート">
+<meta name="theme-color" content="#FFF6EA">
+
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#FFF6EA;overflow:hidden;}
+  /* GASアプリを表示する全画面iframe */
+  #appFrame{
+    position:fixed;inset:0;width:100%;height:100%;border:0;
+    /* iPhoneのノッチ/ホームバー領域を避ける */
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+    box-sizing:border-box;background:#FFF6EA;
+  }
+  /* 読み込み中スプラッシュ（おじさん） */
+  #splash{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;background:#EAE7FB;z-index:10;
+    transition:opacity .4s;font-family:sans-serif;color:#5A4632;
+  }
+  #splash img{width:120px;height:120px;border-radius:26px;
+    box-shadow:0 8px 24px rgba(90,70,50,.18);}
+  #splash p{margin-top:16px;font-weight:700;font-size:14px;}
+  #splash.hide{opacity:0;pointer-events:none;}
+</style>
+</head>
+<body>
+
+  <!-- 読み込み中の表示（iframeが表示され次第フェードアウト） -->
+  <div id="splash">
+    <img src="icons/apple-touch-icon.png" alt="ジェラートおじさん">
+    <p>ジェラートおじさん を起動中…🍦</p>
+  </div>
+
+  <!-- GASウェブアプリを全画面で表示 -->
+  <iframe id="appFrame" title="ジェラートおじさん" allow="camera; geolocation"></iframe>
+
+<script>
+// ============================================================
+//  ▼▼▼ ここに、あなたのGASウェブアプリの「/exec」URLを貼り付けてください ▼▼▼
+//      （GASの「デプロイ」→「ウェブアプリ」のURL。.../exec で終わるもの）
+// ============================================================
+var GAS_APP_URL = "ここにGASウェブアプリのURL（.../exec）を貼り付け";
+// ============================================================
+
+// iframeにGASアプリを読み込む
+var frame = document.getElementById('appFrame');
+frame.src = GAS_APP_URL;
+
+// 読み込めたらスプラッシュを消す
+frame.addEventListener('load', function(){
+  document.getElementById('splash').classList.add('hide');
+});
+// 念のため、一定時間後にもスプラッシュを消す（保険）
+setTimeout(function(){
+  document.getElementById('splash').classList.add('hide');
+}, 4000);
+
+// サービスワーカーを登録（PWAとして成立させる。iOSでは必須ではないが入れておくと安心）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(e){
+      console.log('SW登録スキップ:', e);
+    });
+  });
+}
+</script>
+</body>
+</html>
